@@ -438,6 +438,8 @@ def launch_anvil(
     # Perform unlock accounts for all accounts
     for account in unlocked_addresses:
         unlock_account(web3, account)
+    logger.info("Started Anvil session: %s. Log accessible in terminal with: cat /proc/%s/fd/1 ", f'http:127.0.0.1:{port}',
+                process.pid)
 
     return AnvilLaunch(port, final_cmd, url, process)
 
