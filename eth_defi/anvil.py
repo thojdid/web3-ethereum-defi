@@ -142,16 +142,20 @@ def make_anvil_custom_rpc_request(web3: Web3, method: str, args: Optional[list] 
 
 def reset_anvil(port=8545, fork_block_number=None, fork_url='http://127.0.0.1:8545'):
     """If fork_block_number is None, we fork at the current block"""
-    params = [{'forking':
-                   {'blockNumber': fork_block_number,
-                    'url': fork_url,
-                    'jsonRpcUrl':fork_url},
-               }]
+    fork_params = {
+        'forking': {
+            'url': fork_url,
+            'jsonRpcUrl': fork_url
+        },
+    }
+    if fork_block_number:
+        fork_params['forking']['blockNumber'] = fork_block_number
     r = requests.post(f'http://127.0.0.1:{port}', json={"jsonrpc": "2.0",
                                                         "method": "anvil_reset",
-                                                        "params": params,
-                                                        "id":1})
+                                                        "params": [fork_params],
+                                                        "id": 1})
     r.raise_for_status()
+    logger.info('Anvil resetted on %s from fork url %s', f'http://127.0.0.1:{port}', fork_url)
     return r.json()
 
 @dataclass
@@ -212,7 +216,7 @@ def launch_anvil(
     gas_limit: Optional[int] = None,
     steps_tracing=False,
     test_request_timeout=3.0,
-) -> AnvilLaunch:
+) :
     """Creates Anvil unit test backend or mainnet fork.
 
     - Anvil can be used as web3.py test backend instead of `EthereumTester`.
@@ -441,7 +445,8 @@ def launch_anvil(
     logger.info("Started Anvil session: %s. Log accessible in terminal with: cat /proc/%s/fd/1 ", f'http:127.0.0.1:{port}',
                 process.pid)
 
-    return AnvilLaunch(port, final_cmd, url, process)
+    return AnvilLaunch(port, final_cmd, url, process), Web3(Web3.HTTPProvider(f"http://127.0.0.1:{port}"))
+
 
 
 def unlock_account(web3: Web3, address: str):
